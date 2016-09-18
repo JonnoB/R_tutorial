@@ -1,0 +1,132 @@
+---
+title: "R Tutorial"
+author: "Derek Lukacsko"
+date: "September 8, 2016"
+output: html_document
+---
+
+This part will be provided
+```{r Setting Up Environment}
+# Directory
+set_wd(file.path = "")
+
+# Load packages
+packages <- c("tidyr","dplyr","ggplot2")
+sapply(packages, library, character.only = TRUE)
+
+# Working dataframe
+df <- iris
+
+##ADD AN NA AND CHANGE VARIABLE TYPES##
+df$Sepal.Length <- as.character(df$Sepal.Length)
+df$Species <- as.character(df$Species)
+df$Sepal.Width[100] <- NA
+
+
+# Inspect the data
+dim(df)
+colnames(df)
+View(head(df))
+
+```
+
+1. Identify the feature types
+2. Ensure all continous variables are type:numeric and categorical variables are type:factor
+3. Identify where there are missing values
+4. Handle the missing values
+```{r Exercise 1: Data Cleaning}
+# Feature/vairable types
+sapply(df,class)
+
+# Different ways to do the same thing
+df[,"Sepal.Length"] <- as.factor(df$Sepal.Length)
+df[,5] <- as.factor(df$Species)
+df <- df %>%
+  mutate(Sepal.Length = as.factor(Sepal.Length),
+         Species = as.factor(Species))
+
+
+# Number of missing values
+sum(complete.cases(df))
+
+# What column is it in
+sapply(df, function(x) any(is.na(x)))
+
+# What row is it in
+df[is.na(df$Sepal.Width),]
+
+# Remove the row manually
+
+# Remove the row the easy way
+
+# Replace the row as the median or mean 
+
+```
+
+
+1. Plot the relationship between variables Sepal.Length and Sepal.Width
+2. Color the points by Species
+3. Add a title
+```{r Exercise 2: Data Inspection}
+
+# Dot plot with linear fit
+ggplot(df, aes(x=Sepal.Length,y=Sepal.Width)) + 
+  geom_jitter() +
+  geom_smooth(method = "lm", se = FALSE) +
+  labs(title = "Relationship Between Sepal.Length and Sepal.Width")
+
+# Dot plot colored by species with linear fit
+ggplot(df, aes(x=Sepal.Length,y=Sepal.Width,color = Species)) + 
+  geom_jitter() + 
+  geom_smooth(method = "lm", se = FALSE) +
+  labs(title = "Relationship Between Sepal.Length and Sepal.Width \n by Species")
+
+# Dot plot colored by species with linear fit, faceted by species
+ggplot(df, aes(x=Sepal.Length,y=Sepal.Width,color = Species)) + 
+  facet_wrap(~Species, nrow = 2) + #change nrow
+  geom_point() + 
+  geom_smooth(method = "lm", se = FALSE) +
+  labs(title = "Relationship Between Sepal.Length and Sepal.Width \n Faceted by Species")
+
+# Same as previous but with all point present in each plot
+ggplot(df, aes(Sepal.Length,Sepal.Width, color = Species)) +
+  geom_point(data = transform(df, Species = NULL), colour = "grey85") +
+  geom_point() +
+  geom_smooth(method = "lm", se =FALSE) +
+  facet_wrap(~Species, nrow= 2) +
+ labs(title = "Relationship Between Sepal.Length and Sepal.Width \n Faceted by Species")
+
+```
+
+1. Make a box plot of Sepal.Length
+2. Identify the rows that contain outliers
+3. Handle the outliers
+```{r Exercise 3: Identify Outliers}
+
+```
+
+
+1. Determine if Sepal.Length and Sepal.Width follow a Gaussian distribution using a test of normality
+2. Make a histogram or frequency density plot to roughly visalize the feature distributions
+3. Determine if the correlation between Sepal.Length and Sepal.Width is significant
+```{r Exercise 4: test normality, test correlation}
+
+ggplot(df2, aes(Sepal.Width)) + 
+  stat_bin(bins = 20,  fill="steelblue", color = "white") + 
+  theme_bw()
+
+ggplot(df2, aes(Sepal.Width)) + 
+  geom_density(fill= "steelblue") + 
+  theme_bw()
+
+colnames(df2)
+df2 <- df[,c(1:4)]
+cor.test(df2)
+
+# Low P --> reject H0
+cor.test(df2$Sepal.Length,df2$Sepal.Width, method = c("pearson"), conf.level = 0.95)[3]
+
+
+```
+
+
