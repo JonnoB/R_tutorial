@@ -1,17 +1,19 @@
 ---
-title: "R Tutorial"
+title: "R Tutorial For Business Analytics"
 author: "Derek Lukacsko"
 date: "September 8, 2016"
 output: html_document
 ---
 
+#Setup
 This part will be provided
+
 ```{r Setting Up Environment}
 # Directory
-set_wd(file.path = "")
+#setwd(file.path = "")
 
 # Load packages
-packages <- c("tidyr","dplyr","ggplot2")
+packages <- c("tidyverse")
 sapply(packages, library, character.only = TRUE)
 
 # Working dataframe
@@ -30,6 +32,11 @@ View(head(df))
 
 ```
 
+
+I think that if you want to show manipulation then using mtcars would be better all its variables are numeric but some should logically be broken into factors, this is not the case with the iris data set.
+
+#Exploring the data
+
 1. Identify the feature types
 2. Ensure all continous variables are type:numeric and categorical variables are type:factor
 3. Identify where there are missing values
@@ -39,6 +46,7 @@ View(head(df))
 sapply(df,class)
 
 # Different ways to do the same thing
+df$Sepal.Length <-as.factor(df$Sepal.Length)
 df[,"Sepal.Length"] <- as.factor(df$Sepal.Length)
 df[,5] <- as.factor(df$Species)
 df <- df %>%
@@ -47,6 +55,9 @@ df <- df %>%
 
 
 # Number of missing values
+is.na(df) %>% sum
+
+#Number of valid rows
 sum(complete.cases(df))
 
 # What column is it in
@@ -64,9 +75,22 @@ df[is.na(df$Sepal.Width),]
 ```
 
 
+#Creating Plots
+In this section we willl explore using ggplot2 R's most popular plotting package to visualise data sets. We will begin using a simple scatter plot, and then build on it's complexity by adding "layers". After the scatter plot we will create a box plot. 
+
+
+##Scatterplot 
+
+I don't think jitter should be used, it doesn't add anything to the data and will make everyones graph look different whilst reducing the separation of the data. geom_point is more simple and and provides a better visual. 
+
+The geom_smooth is quite advanced for a first few plots also it isn't working on my version
+
+The facet wrap with grey dots in the background is awesome I've never done that before
+
 1. Plot the relationship between variables Sepal.Length and Sepal.Width
 2. Color the points by Species
 3. Add a title
+
 ```{r Exercise 2: Data Inspection}
 
 # Dot plot with linear fit
@@ -77,8 +101,9 @@ ggplot(df, aes(x=Sepal.Length,y=Sepal.Width)) +
 
 # Dot plot colored by species with linear fit
 ggplot(df, aes(x=Sepal.Length,y=Sepal.Width,color = Species)) + 
-  geom_jitter() + 
-  geom_smooth(method = "lm", se = FALSE) +
+  #geom_jitter() + 
+  geom_point() +
+#  geom_smooth(method = "lm", se = FALSE) +
   labs(title = "Relationship Between Sepal.Length and Sepal.Width \n by Species")
 
 # Dot plot colored by species with linear fit, faceted by species
@@ -98,10 +123,22 @@ ggplot(df, aes(Sepal.Length,Sepal.Width, color = Species)) +
 
 ```
 
+
+I don't think we should be involved in outlier removal. That is a pretty controversial area, I don't think it is good to introduce it to this class. I would say that using boxplots and helping explain why they contain more information than bar plots would be a better move.
+
+#Boxplot
+Boxplots are a compact way of representing key statistics in categorical/factoral data. 
+
 1. Make a box plot of Sepal.Length
 2. Identify the rows that contain outliers
 3. Handle the outliers
-```{r Exercise 3: Identify Outliers}
+```{r Exercise 3: BoxPlots}
+df <-iris
+
+ggplot(df, aes(x= Species, y=Sepal.Length, fill =Species)) + 
+  geom_boxplot()+
+  labs(title = "Relationship Between Sepal.Length and Species")
+
 
 ```
 
@@ -111,6 +148,8 @@ ggplot(df, aes(Sepal.Length,Sepal.Width, color = Species)) +
 3. Determine if the correlation between Sepal.Length and Sepal.Width is significant
 ```{r Exercise 4: test normality, test correlation}
 
+# I don't know why df2 has been brought in
+df2<-df
 ggplot(df2, aes(Sepal.Width)) + 
   stat_bin(bins = 20,  fill="steelblue", color = "white") + 
   theme_bw()
@@ -121,7 +160,8 @@ ggplot(df2, aes(Sepal.Width)) +
 
 colnames(df2)
 df2 <- df[,c(1:4)]
-cor.test(df2)
+#This produces an error I don't kniw what you are trying to do
+#cor.test(df2)
 
 # Low P --> reject H0
 cor.test(df2$Sepal.Length,df2$Sepal.Width, method = c("pearson"), conf.level = 0.95)[3]
