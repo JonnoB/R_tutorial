@@ -8,13 +8,13 @@ output: html_document
 #Setup
 This part will be provided
 
-```{r Setting Up Environment}
+```{r Setting Up Environment, message=FALSE}
 # Directory
 #setwd(file.path = "")
 
 # Load packages
 packages <- c("tidyverse")
-sapply(packages, library, character.only = TRUE)
+invisible(sapply(packages, library, character.only = TRUE))
 
 # Working dataframe
 df <- iris
