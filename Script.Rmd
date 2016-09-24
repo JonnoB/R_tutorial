@@ -13,7 +13,7 @@ knitr::opts_chunk$set(echo = FALSE)
 
 ```{r Set up hidden, message=FALSE}
 # Load packages
-packages <- c("tidyverse", "openxlsx")
+packages <- c("tidyverse", "openxlsx", "gridExtra")
 
 #This piece of code will check to see if the packages you want to load are installed if they aren't it will install them
 new.packages <- packages[!(packages %in% installed.packages()[,"Package"])]
@@ -40,7 +40,7 @@ basewd <-getwd()
 #Setup
 Setting up the environment can be very helpful to do in one place this first code chunk can store all the packages you need in your analysis, load any custom functions that you have made through out the analysis and store the locations of any folders that you use for easy folder switching.
 
-**TIPS** Short cuts can be very helpful especially inserting a new chunk using `ctrl+alt+i`
+**TIP\:** Short cuts can be very helpful especially inserting a new chunk using `ctrl+alt+i`
 
 ```{r Setting Up Environment, eval=FALSE, echo=TRUE}
 # Load packages
@@ -128,7 +128,7 @@ A matrix can only hold a single class of information for example, integers **or*
 2. Change hp to an integer
 3. Using sapply check the changes have taken place
 
-**Tip** For changes to variables in a dataframe or matrix use mutate (look at the wrangling cheatsheet).
+**Tip\:** For changes to variables in a dataframe or matrix use mutate (look at the wrangling cheatsheet).
 
 ```{r}
 
@@ -212,7 +212,7 @@ DataFolder <- getwd()
 ##Saving data
 We have made some changes to our dataframe and so it is a good idea to save it somewhere. Getting data in and out of R that is not a preloaded dataset can be difficult when starting out so we will go through a few methods. The most common methods for saving data is `save`, `saveRDS`, `write.csv` which is a special case of `write.table`, and `write.xlsx` from the `opsenxlsx` package.
 
-**Tip** Remember to use the correct file extension at the end of the file name when saving, it makes it easier to identify files and for them to be opened by others.
+**Tip\:** Remember to use the correct file extension at the end of the file name when saving, it makes it easier to identify files and for them to be opened by others.
 
 
 1. Save a version of df using `write.csv` (dfcsv), `saveRDS` (dfRDS), and `write.xlsx` (dfxlsx)
@@ -220,10 +220,10 @@ We have made some changes to our dataframe and so it is a good idea to save it s
 3. Using the `all.equal` function compare the loaded files to the orignial df frame, what do you notice? you can also include `sapply` to compare each of the columns of the two dataframes.
 4. delete all the dfxxx dataframes from the workspace.
 
-**Note:** You may get an error message reffering to "Rtools" when you try to use `read.xlsx`, If you do just skip the xlsx bit and install Rtools later
+**Note\:** You may get an error message reffering to "Rtools" when you try to use `read.xlsx`, If you do just skip the xlsx bit and install Rtools later
 
 
-**TIP:** You may wish to experiment including `row.names=1` when loading the csv.
+**TIP\:** You may wish to experiment including `row.names=1` when loading the csv.
 
 ```{r saving}
 
@@ -257,7 +257,7 @@ The way you save files and the methods you can use to load data into your machin
 #Creating Plots
 In this section we willl explore using ggplot2 R's most popular plotting package to visualise data sets. We will begin using a simple scatter plot, and then build on it's complexity by adding "layers". After the scatter plot we will create a box plot which is very useful for representing catagorical/factoral data.
 
-**Tip:** The ggplot cheat sheet will be pretty useful
+**Tip\:** The ggplot cheat sheet will be pretty useful
 
 ##Scatterplot 
 
@@ -272,23 +272,25 @@ In this section we willl explore using ggplot2 R's most popular plotting package
 df<-iris
 
 #2
-ggplot(df, aes(x=Sepal.Length,y=Sepal.Width)) + 
+p1 <-ggplot(df, aes(x=Sepal.Length,y=Sepal.Width)) + 
   geom_point() +
-  labs(title = "Relationship Between Sepal.Length and Sepal.Width")
+  labs(title = "Relationship Between Sepal.Length\n and Sepal.Width")
 
 # 3 add linear regression
-ggplot(df, aes(x=Sepal.Length,y=Sepal.Width)) + 
+p2<-ggplot(df, aes(x=Sepal.Length,y=Sepal.Width)) + 
   geom_point() +
   geom_smooth(method = "lm", se = FALSE) +
-  labs(title = "Relationship Between Sepal.Length and Sepal.Width")
+  labs(title = "Relationship Between Sepal.Length\n and Sepal.Width")
 
 
 #4 Add in colours
-ggplot(df, aes(x=Sepal.Length,y=Sepal.Width,color = Species)) + 
+p3<-ggplot(df, aes(x=Sepal.Length,y=Sepal.Width,color = Species)) + 
   geom_point() +
   geom_smooth(method = "lm", se = FALSE) +
-  labs(title = "Relationship Between Sepal.Length and Sepal.Width \n by Species")
+  labs(title = "Relationship Between Sepal.Length\n and Sepal.Width by Species")
 
+grid.arrange(p1,p2, ncol=2)
+p3
 #5 plots facetted with grey dots added in the background to indicate where the other species are
 ggplot(df, aes(Sepal.Length,Sepal.Width, color = Species)) +
   geom_point(data = transform(df, Species = NULL), colour = "grey85") +
@@ -300,27 +302,51 @@ ggplot(df, aes(Sepal.Length,Sepal.Width, color = Species)) +
 ```
 
 
-#Boxplot
+#Boxplots
 Boxplots are a compact way of representing key statistics in categorical/factoral data. Often barplots are used to represent factoral data however they contain less information than barplots and so should generally be avoided.
 
 1. Load "dfRDS.rds" and assign it to variable `df`
 1. Make a barplot of mean mpg per cylinder, you will need to use `group_by` and `summarise`, also barplots need `stat="identity" in the geom.
 1. Make a box plot of mpg per cylinder
+4. Make a new folder called "Figures" in "R_tutorial" use `ggsave` and create a pdf and a png of the boxplot 
 
-```{r BoxPlots}
+```{r, eval=FALSE}
 
 setwd(DataFolder) #Set the working directory just in case we changed it for some reason
+
+```
+
+
+```{r BoxPlots}
 df <-readRDS("dfRDS.rds")
-
-
 #Doing you processing for plots in a chain is convenient if you don't need the processed data frame again.
-df %>% group_by(cyl) %>% summarise(mpg=mean(mpg)) %>% 
+p1 <-df %>% group_by(cyl) %>% summarise(mpg=mean(mpg)) %>% 
   ggplot(., aes(x= cyl, y=mpg, fill =cyl)) + 
-  geom_bar(stat="identity") +ggtitle("barplot of average miles per gallon by cylinder type")
+  geom_bar(stat="identity") +ggtitle("Barplot mean mpg vs cylinder type")+
+  theme(legend.position="none")
 
-ggplot(df, aes(x= cyl, y=mpg, fill =cyl)) + 
+p2 <-ggplot(df, aes(x= cyl, y=mpg, fill =cyl)) + 
   geom_boxplot()+
-  labs(title = "Relationship Between Cylinders and fuel efficiency")
+  labs(title = "Boxplot of mpg vs cylinders")+
+  theme(legend.position="none")
+
+grid.arrange(p1,p2, ncol=2)
+
+
+
+```
+
+
+```{r, eval=FALSE}
+#Create new folder
+#Generally it's better to create the folder structure beforehand, this allows you to create path objects making life easier. However for the purposes of this tutorial we are doing it like this.
+setwd(file.path(basewd,"R_tutorial"))
+dir.create("Figures")
+setwd("./Figures")
+#ggsave, will save the last ggplot produced
+p2
+ggsave("Boxplot.pdf")
+
 
 ```
 
@@ -333,7 +359,7 @@ ggplot(df, aes(x= cyl, y=mpg, fill =cyl)) +
 ```{r Exercise 4: test normality, test correlation}
 
 # I don't know why df2 has been brought in
-df2<-df
+df2<-iris
 ggplot(df2, aes(Sepal.Width)) + 
   stat_bin(bins = 20,  fill="steelblue", color = "white") + 
   theme_bw()
@@ -343,7 +369,7 @@ ggplot(df2, aes(Sepal.Width)) +
   theme_bw()
 
 colnames(df2)
-df2 <- df[,c(1:4)]
+df2 <- df2[,c(1:4)]
 #This produces an error I don't kniw what you are trying to do
 #cor.test(df2)
 
@@ -358,12 +384,12 @@ cor.test(df2$Sepal.Length,df2$Sepal.Width, method = c("pearson"), conf.level = 0
 
 Without SO programming would be an even more difficult and frustrating experience than it already is. SO has a lot of questions already answered, you will still probably want to ask some. However if you want to be an OG as well as an OP you should [read this](http://stackoverflow.com/help/how-to-ask) and follow a few basic rules.
 
-1. Make sure you have actually tried. The SO community is there to answer questions not hold hands and react badly when it looks like someone hasn't attempted the question themslef first.
+1. Make sure you have actually tried. The SO community is there to answer questions not hold hands and react badly when it looks like someone hasn't attempted the question themself first.
 2. Google it first! if there is already answer outthere especially if the answer is on SO already, your question will be voted down and closed.
 3. Proivide a [minimal reproducible](http://stackoverflow.com/questions/5963269/how-to-make-a-great-r-reproducible-example) example. This is the most important thing to do once you have gone through the other two points. For R the best way to create a reproducible example is using `dput`. The key is providing just enough information so that the question is answerable. 
 
 
-```{r dput, eval = FALSE}
+```{r dput, eval = FALSE, echo= T}
  ?dput
 #The script produced can be pasted into SO, other people can then copy the code and assign it a variable 
 diamonds %>% head %>% dput
