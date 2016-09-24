@@ -5,93 +5,224 @@ date: "September 8, 2016"
 output: html_document
 ---
 
-#Setup
-This part will be provided
 
-```{r Setting Up Environment, message=FALSE}
+```{r Chunk opts, echo=FALSE}
+knitr::opts_chunk$set(echo = FALSE)
+```
+
+
+
+```{r Set up hidden, message=FALSE, echo=FALSE}
 # Directory
 #setwd(file.path = "")
 
 # Load packages
-packages <- c("tidyverse")
+packages <- c("tidyverse", "xtable")
+
+#This piece of code will check to see if the packages you want to load are installed if they aren't it will install them
+new.packages <- packages[!(packages %in% installed.packages()[,"Package"])]
+if(length(new.packages)) install.packages(new.packages)
+
 invisible(sapply(packages, library, character.only = TRUE))
 
-# Working dataframe
-df <- iris
-
-##ADD AN NA AND CHANGE VARIABLE TYPES##
-df$Sepal.Length <- as.character(df$Sepal.Length)
-df$Species <- as.character(df$Species)
-df$Sepal.Width[100] <- NA
-
-
-# Inspect the data
-dim(df)
-colnames(df)
-View(head(df))
-
+#save the starting directory as a variable
+baswd <-getwd()
 ```
 
 
-I think that if you want to show manipulation then using mtcars would be better all its variables are numeric but some should logically be broken into factors, this is not the case with the iris data set.
+
+#Introduction
+
+##Sources of help
+
+1. Typing `?` followed by the function name e.g `?help` or `?sum`
+1. [Google](www.google.co.uk)
+2. [stackoverflow](http://www.stackoverflow.com)
+3000. [Rstudio's cheatsheets](https://www.rstudio.com/resources/cheatsheets/) (for this you'll neeed the wrangling and ggplot ones)
+4. [ggplot2 help website](http://docs.ggplot2.org/current/)
+
+#Setup
+Setting up the environment can be very helpful to do in one place this first code chunk can store all the packages you need in your analysis, load any custom functions that you have made through out the analysis and store the locations of any folders that you use for easy folder switching.
+
+**TIPS**
+* Short cuts can be very helpful especially inserting a new chunk using `ctrl+alt+i`
+* Creating a folder structure for you projects keeps everything easy to find, functions in the function folder, data in the data folder etc.
+
+```{r Setting Up Environment, eval=FALSE, echo=TRUE}
+# Directory
+#setwd(file.path = "")
+
+# Load packages
+packages <- c("tidyverse", "openxlsx")
+
+#This piece of code will check to see if the packages you want to load are installed if they aren't it will install them
+new.packages <- packages[!(packages %in% installed.packages()[,"Package"])]
+if(length(new.packages)) install.packages(new.packages)
+
+invisible(sapply(packages, library, character.only = TRUE))
+
+#save the starting directory as a variable
+basewd <-getwd()
+```
+
+
+
 
 #Exploring the data
 
-1. Identify the feature types
-2. Ensure all continous variables are type:numeric and categorical variables are type:factor
-3. Identify where there are missing values
-4. Handle the missing values
-```{r Exercise 1: Data Cleaning}
-# Feature/vairable types
-sapply(df,class)
 
-# Different ways to do the same thing
-df$Sepal.Length <-as.factor(df$Sepal.Length)
-df[,"Sepal.Length"] <- as.factor(df$Sepal.Length)
-df[,5] <- as.factor(df$Species)
-df <- df %>%
-  mutate(Sepal.Length = as.factor(Sepal.Length),
-         Species = as.factor(Species))
+R contains many different data sets and additional data sets are usually installed with new packages. You can see what packages are installed on your machineby typing `data()` in the command line. packages can be loaded using the following methods
+```{r, echo=TRUE}
 
+data("airquality") #creates a promise
+airquality %>% head #anything that calls the promises causes it to be evaluated
+rm(airquality) #delete the dataframe
 
-# Number of missing values
-is.na(df) %>% sum
-
-#Number of valid rows
-sum(complete.cases(df))
-
-# What column is it in
-sapply(df, function(x) any(is.na(x)))
-
-# What row is it in
-df[is.na(df$Sepal.Width),]
-
-# Remove the row manually
-
-# Remove the row the easy way
-
-# Replace the row as the median or mean 
+testdf <- airquality #loading can also be done like this
+rm(testdf) #we don't need this variable cluttering up the workspace
 
 ```
 
 
+Load the `mtcars` data frame and assign it to the variable `df`
+
+```{r}
+# Working dataframe
+df <- mtcars
+```
+
+
+1. With the data frame you have just loaded, use the functions,`class`, `dim`, `head`, `colnames`, `names`, `View`.
+1. Load the datasets `VADeaths` and `discoveries` and use the same functions, what happens? why do you think it happens?
+
+```{r}
+
+# Inspect the data
+class(df)
+dim(df)
+colnames(df)
+View(head(df))
+head(df)
+```
+
+#Classes
+
+In R all the objects you work with have different classes these can be data frames, matrices, models, vectors etc. Different objects have different properties, meaning they react differently to the functions you try on them.
+
+Given that data frames can hold multiple data types it is worth checking what class each column in a data frame is. This can be boring to check one at a time so using a `for` loop could be an option. However R also has a group of functions called the `apply` family, `sapply`, and `lapply` being the most commonly used. These functions move across every element of a dataframe/matrix/list and perform a function on it returning the result.
+
+##Check the class of each variable
+1. Use sapply to sum up each column of the dataframe `df` 
+1. Use `sapply` to find out the classes of each varible in `df` compare this to the classes found in the `iris` data set.
+3. Do you think the results of the summming function is surprising?
+
+```{r using sapply}
+
+sapply(df, sum)
+#sapply(iris, sum)
+
+sapply(df, class)
+#sapply(iris, class)
+
+```
+
+##Change class
+
+As was seen in the previous exercise some of the variables of df could do with changing class. Class can be changed by calling `as.` before the class you want to convert to e.g `as.data.frame` if possible R will then coerce the object into the new class, or return an error if it is not possible.
+
+A matrix can only hold a single class of information for example, integers **or** characters but not both. A data frame can hold multiple data types as long as they are vectors, this makes data frames much more flexible they are the building block of working in R. A list can hold whatever you like including other lists.
+
+
+1. Change the cyl, vs, and am  variables to factors (Use `lapply` or `mutate_at` if you can work out how)
+2. Change hp to an integer
+3. Using sapply check the changes have taken place
+
+**Tip**
+For changes to variables in a dataframe or matrix use mutate (look at the wrangling cheatsheet).
+
+```{r}
+
+#Old school solution using lapply
+df2 <-df
+df2[,c(2,8,9)] <- lapply(c(2,8,9), function(n) as.factor(df2[,n]))
+df2$hp <- as.integer(df2$hp)
+
+#Modern style using chaining and dplyr
+df %<>% mutate_at(c(2,8,9), as.factor) %>% mutate(hp= as.integer(hp))
+
+sapply(df2, class)
+sapply(df, class)
+```
+
+```{r, eval= FALSE}
+#Are they equal?
+all.equal(sapply(df2, class), sapply(df, class))
+#win
+```
+
+```{r}
+#this variable is not needed, but because the previous code chunk is not evaluated it needs to be deleted here
+rm(df2)
+```
+
+
+#Exploring Data
+
+Getting an idea of what is going on in your data frame is an important first step in working with data, we have already learn a bit about how the data works, now we are going to go a bit deeper.
+
+1. Use rownames() and mutate() to make a new variable called "model" that has the names of the cars
+2. Use the summary function to get a an overview of the dataset
+2. Return the data frame with only th first 5 car models
+3. Return the data frame with the top 5 most fuel efficient cars
+4. Return a dataframe with the 5 least fuel efficient cars
+5. Find the most fuel efficient car for each cylinder group
+
+```{r Exercise 1: Data Cleaning}
+
+df <- df %>% mutate(model = rownames(.))
+summary(df)
+df %>% top_n(5, mpg)#top 5 unordered
+df %>% arrange(desc(mpg)) %>% top_n(5, mpg) #top 5 ordered
+df %>% arrange(mpg) %>% head(5) #
+df %>% arrange(desc(mpg)) %>% group_by(cyl) %>% summarise_all(first)
+
+```
+
+
+#Saving data
+In the next section we are going to use a different data, however we have made some changes to our dataframe and so it is a good idea to save it somewhere. Getting data in and out of R that is not a preloaded dataset can be difficult when starting out so we will go through a few methods. The most common methods for saving data is `save`, `saveRDS`, `write.csv` which is a special case of `write.table`, and `write.xlsx` from the `opsenxlsx` package.
+
+**Tip** Remember to use the correct file extension at the end of the file name when saving, it makes it easier to identify files and for them to be opened by others.
+
+##Creating sub directories
+In order to make our project manageable and easy to navigate we will create a new folder for the data, then save various versions of the dataframe `df` in it for later
+
+```{r saving}
+
+setwd(basewd)
+dir.create("R_tutorial")
+dir.exists("R_tutorial")
+
+save("df", "df_save")
+
+```
+
+
+
 #Creating Plots
-In this section we willl explore using ggplot2 R's most popular plotting package to visualise data sets. We will begin using a simple scatter plot, and then build on it's complexity by adding "layers". After the scatter plot we will create a box plot. 
+In this section we willl explore using ggplot2 R's most popular plotting package to visualise data sets. We will begin using a simple scatter plot, and then build on it's complexity by adding "layers". After the scatter plot we will create a box plot which is very useful for representing catagorical/factoral data
 
 
 ##Scatterplot 
 
-I don't think jitter should be used, it doesn't add anything to the data and will make everyones graph look different whilst reducing the separation of the data. geom_point is more simple and and provides a better visual. 
 
-The geom_smooth is quite advanced for a first few plots also it isn't working on my version
-
-The facet wrap with grey dots in the background is awesome I've never done that before
 
 1. Plot the relationship between variables Sepal.Length and Sepal.Width
 2. Color the points by Species
 3. Add a title
 
 ```{r Exercise 2: Data Inspection}
+df<-iris
 
 # Dot plot with linear fit
 ggplot(df, aes(x=Sepal.Length,y=Sepal.Width)) + 
@@ -103,7 +234,7 @@ ggplot(df, aes(x=Sepal.Length,y=Sepal.Width)) +
 ggplot(df, aes(x=Sepal.Length,y=Sepal.Width,color = Species)) + 
   #geom_jitter() + 
   geom_point() +
-#  geom_smooth(method = "lm", se = FALSE) +
+  geom_smooth(method = "lm", se = FALSE) +
   labs(title = "Relationship Between Sepal.Length and Sepal.Width \n by Species")
 
 # Dot plot colored by species with linear fit, faceted by species
@@ -168,5 +299,38 @@ cor.test(df2$Sepal.Length,df2$Sepal.Width, method = c("pearson"), conf.level = 0
 
 
 ```
+
+
+#Asking Questions on Stackoverflow
+
+Without SO programming would be an even more difficult and frustrating experience than it already is. SO has a lot of questions already answered, you will still probably want to ask some. However if you want to be an OG as well as an OP you should [read this](http://stackoverflow.com/help/how-to-ask) and follow a few basic rules.
+
+1. Make sure you have actually tried. The SO community is there to answer questions not hold hands and react badly when it looks like someone hasn't attempted the question themslef first.
+2. Google it first! if there is already answer outthere especially if the answer is on SO already, your question will be voted down and closed.
+3. Proivide a [minimal reproducible](http://stackoverflow.com/questions/5963269/how-to-make-a-great-r-reproducible-example) example. This is the most important thing to do once you have gone through the other two points. For R the best way to create a reproducible example is using `dput`. The key is providing just enough information so that the question is answerable. 
+
+
+```{r dput, eval = FALSE}
+ ?dput
+#The script produced can be pasted into SO, other people can then copy the code and assign it a variable 
+diamonds %>% head %>% dput
+
+#Asign this structure to "test" and have a look at it
+structure(list(Ozone = c(41L, 36L, 12L, 18L, NA, 28L, 23L, 19L, 
+8L, NA, 7L, 16L, 11L, 14L, 18L, 14L, 34L, 6L, 30L, 11L), Solar.R = c(190L, 
+118L, 149L, 313L, NA, NA, 299L, 99L, 19L, 194L, NA, 256L, 290L, 
+274L, 65L, 334L, 307L, 78L, 322L, 44L), Wind = c(7.4, 8, 12.6, 
+11.5, 14.3, 14.9, 8.6, 13.8, 20.1, 8.6, 6.9, 9.7, 9.2, 10.9, 
+13.2, 11.5, 12, 18.4, 11.5, 9.7), Temp = c(67L, 72L, 74L, 62L, 
+56L, 66L, 65L, 59L, 61L, 69L, 74L, 69L, 66L, 68L, 58L, 64L, 66L, 
+57L, 68L, 62L), Month = c(5L, 5L, 5L, 5L, 5L, 5L, 5L, 5L, 5L, 
+5L, 5L, 5L, 5L, 5L, 5L, 5L, 5L, 5L, 5L, 5L), Day = 1:20), .Names = c("Ozone", 
+"Solar.R", "Wind", "Temp", "Month", "Day"), row.names = c(NA, 
+20L), class = "data.frame")
+
+#By doing this, classes, variuable names and everything important about the data is preserved and people will find it much easier to help you.
+
+```
+
 
 
