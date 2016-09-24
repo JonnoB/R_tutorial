@@ -1,6 +1,6 @@
 ---
 title: "R Tutorial For Business Analytics"
-author: "Derek Lukacsko"
+author: "Derek Lukacsko & Jonathan Bourne"
 date: "September 8, 2016"
 output: html_document
 ---
@@ -11,13 +11,9 @@ knitr::opts_chunk$set(echo = FALSE)
 ```
 
 
-
-```{r Set up hidden, message=FALSE, echo=FALSE}
-# Directory
-#setwd(file.path = "")
-
+```{r Set up hidden, message=FALSE}
 # Load packages
-packages <- c("tidyverse", "xtable")
+packages <- c("tidyverse", "openxlsx")
 
 #This piece of code will check to see if the packages you want to load are installed if they aren't it will install them
 new.packages <- packages[!(packages %in% installed.packages()[,"Package"])]
@@ -26,7 +22,7 @@ if(length(new.packages)) install.packages(new.packages)
 invisible(sapply(packages, library, character.only = TRUE))
 
 #save the starting directory as a variable
-baswd <-getwd()
+basewd <-getwd()
 ```
 
 
@@ -44,14 +40,9 @@ baswd <-getwd()
 #Setup
 Setting up the environment can be very helpful to do in one place this first code chunk can store all the packages you need in your analysis, load any custom functions that you have made through out the analysis and store the locations of any folders that you use for easy folder switching.
 
-**TIPS**
-* Short cuts can be very helpful especially inserting a new chunk using `ctrl+alt+i`
-* Creating a folder structure for you projects keeps everything easy to find, functions in the function folder, data in the data folder etc.
+**TIPS** Short cuts can be very helpful especially inserting a new chunk using `ctrl+alt+i`
 
 ```{r Setting Up Environment, eval=FALSE, echo=TRUE}
-# Directory
-#setwd(file.path = "")
-
 # Load packages
 packages <- c("tidyverse", "openxlsx")
 
@@ -137,8 +128,7 @@ A matrix can only hold a single class of information for example, integers **or*
 2. Change hp to an integer
 3. Using sapply check the changes have taken place
 
-**Tip**
-For changes to variables in a dataframe or matrix use mutate (look at the wrangling cheatsheet).
+**Tip** For changes to variables in a dataframe or matrix use mutate (look at the wrangling cheatsheet).
 
 ```{r}
 
@@ -189,62 +179,117 @@ df %>% arrange(desc(mpg)) %>% group_by(cyl) %>% summarise_all(first)
 ```
 
 
-#Saving data
-In the next section we are going to use a different data, however we have made some changes to our dataframe and so it is a good idea to save it somewhere. Getting data in and out of R that is not a preloaded dataset can be difficult when starting out so we will go through a few methods. The most common methods for saving data is `save`, `saveRDS`, `write.csv` which is a special case of `write.table`, and `write.xlsx` from the `opsenxlsx` package.
-
-**Tip** Remember to use the correct file extension at the end of the file name when saving, it makes it easier to identify files and for them to be opened by others.
+#Outside the R environment
+Obviously installing packages requires exiting the R environment and accessing the packages online at CRAN, however other times it is usefull to access things outside your R environment. In this section we will look at the basics of creating new folders, changing the working directory and saving files.
 
 ##Creating sub directories
-In order to make our project manageable and easy to navigate we will create a new folder for the data, then save various versions of the dataframe `df` in it for later
+In order to make our project manageable and easy to navigate we will create a new folder for the data.
 
-```{r saving}
 
+1. Set the working directory to `basewd` which was defined at the begnining, you will need the function `setwd`.
+2. Use the function `dir.create` to make a new folder called "R_tutorial",check that it exists.
+3. Change the working directory to be inside the "R_tutorial" folder, you might want to use the `file.path` function.
+4. Create a folder called `Data` and set the working directory inside it.
+5. Save the file path to the Data directory as a variable call it "DataFolder"
+
+```{r, warning=FALSE, message=FALSE}
+#1
 setwd(basewd)
+#2
 dir.create("R_tutorial")
 dir.exists("R_tutorial")
-
-save("df", "df_save")
+#3
+setwd(file.path(basewd, "R_tutorial"))
+#4
+dir.create("Data")
+setwd("./Data") #When you are shifting down a directory you can use the "./name" method this can be shorter
+#5
+DataFolder <- getwd()
 
 ```
 
 
+##Saving data
+We have made some changes to our dataframe and so it is a good idea to save it somewhere. Getting data in and out of R that is not a preloaded dataset can be difficult when starting out so we will go through a few methods. The most common methods for saving data is `save`, `saveRDS`, `write.csv` which is a special case of `write.table`, and `write.xlsx` from the `opsenxlsx` package.
+
+**Tip** Remember to use the correct file extension at the end of the file name when saving, it makes it easier to identify files and for them to be opened by others.
+
+
+1. Save a version of df using `write.csv` (dfcsv), `saveRDS` (dfRDS), and `write.xlsx` (dfxlsx)
+2. Load the files using `read.csv`, `readRDS` and `read.xlsx`
+3. Using the `all.equal` function compare the loaded files to the orignial df frame, what do you notice? you can also include `sapply` to compare each of the columns of the two dataframes.
+4. delete all the dfxxx dataframes from the workspace.
+
+**Note:** You may get an error message reffering to "Rtools" when you try to use `read.xlsx`, If you do just skip the xlsx bit and install Rtools later
+
+
+**TIP:** You may wish to experiment including `row.names=1` when loading the csv.
+
+```{r saving}
+
+#1
+write.csv(df, "dfcsv.csv")
+saveRDS(df, "dfRDS.rds")
+#write.xlsx(df, "dfxlsx.xlsx")
+
+#2
+dfcsv <- read.csv("dfcsv.csv", row.names=1)
+
+dfRDS <- readRDS("dfRDS.rds")
+
+#dfxlsx <-read.xlsx("dfxlsx.xlsx")
+
+#4
+all.equal(df, dfcsv)
+all.equal(df, dfRDS)
+#all.equal(df, dfxlsx)
+
+all.equal(sapply(df, class), sapply(dfcsv, class))
+all.equal(sapply(df, class), sapply(dfRDS, class))
+#all.equal(sapply(df, class), sapply(dfxlsx, class))
+
+#4
+rm(list = c(ls()[grep("df", ls())]))
+```
+
+The way you save files and the methods you can use to load data into your machine, affect what happens to it later. Generally saving data in RDS format is a good idea, it get compressed, and all class information is maintained, it can also be used to store other objects that are not tabular datasets, such as lists, models, etc. However you will seldom be lucky enough to recieve data in RDS format so knowing what to expect when that happens is important. Lookup the `readr` package and familiarise yourself with `stringsAsFactors` in `read.csv` that can ruin your day.
 
 #Creating Plots
-In this section we willl explore using ggplot2 R's most popular plotting package to visualise data sets. We will begin using a simple scatter plot, and then build on it's complexity by adding "layers". After the scatter plot we will create a box plot which is very useful for representing catagorical/factoral data
+In this section we willl explore using ggplot2 R's most popular plotting package to visualise data sets. We will begin using a simple scatter plot, and then build on it's complexity by adding "layers". After the scatter plot we will create a box plot which is very useful for representing catagorical/factoral data.
 
+**Tip:** The ggplot cheat sheet will be pretty useful
 
 ##Scatterplot 
 
-
-
+1. Load the "iris" data set
 1. Plot the relationship between variables Sepal.Length and Sepal.Width
+4. add a linear regression
 2. Color the points by Species
-3. Add a title
+5. Bring fire
 
-```{r Exercise 2: Data Inspection}
+```{r Exercise 2: Scatter plotting}
+#1
 df<-iris
 
-# Dot plot with linear fit
+#2
 ggplot(df, aes(x=Sepal.Length,y=Sepal.Width)) + 
-  geom_jitter() +
+  geom_point() +
+  labs(title = "Relationship Between Sepal.Length and Sepal.Width")
+
+# 3 add linear regression
+ggplot(df, aes(x=Sepal.Length,y=Sepal.Width)) + 
+  geom_point() +
   geom_smooth(method = "lm", se = FALSE) +
   labs(title = "Relationship Between Sepal.Length and Sepal.Width")
 
-# Dot plot colored by species with linear fit
+
+#4 Add in colours
 ggplot(df, aes(x=Sepal.Length,y=Sepal.Width,color = Species)) + 
-  #geom_jitter() + 
   geom_point() +
   geom_smooth(method = "lm", se = FALSE) +
   labs(title = "Relationship Between Sepal.Length and Sepal.Width \n by Species")
 
-# Dot plot colored by species with linear fit, faceted by species
-ggplot(df, aes(x=Sepal.Length,y=Sepal.Width,color = Species)) + 
-  facet_wrap(~Species, nrow = 2) + #change nrow
-  geom_point() + 
-  geom_smooth(method = "lm", se = FALSE) +
-  labs(title = "Relationship Between Sepal.Length and Sepal.Width \n Faceted by Species")
-
-# Same as previous but with all point present in each plot
+#5 plots facetted with grey dots added in the background to indicate where the other species are
 ggplot(df, aes(Sepal.Length,Sepal.Width, color = Species)) +
   geom_point(data = transform(df, Species = NULL), colour = "grey85") +
   geom_point() +
@@ -255,23 +300,31 @@ ggplot(df, aes(Sepal.Length,Sepal.Width, color = Species)) +
 ```
 
 
-I don't think we should be involved in outlier removal. That is a pretty controversial area, I don't think it is good to introduce it to this class. I would say that using boxplots and helping explain why they contain more information than bar plots would be a better move.
-
 #Boxplot
-Boxplots are a compact way of representing key statistics in categorical/factoral data. 
+Boxplots are a compact way of representing key statistics in categorical/factoral data. Often barplots are used to represent factoral data however they contain less information than barplots and so should generally be avoided.
 
-1. Make a box plot of Sepal.Length
-2. Identify the rows that contain outliers
-3. Handle the outliers
-```{r Exercise 3: BoxPlots}
-df <-iris
+1. Load "dfRDS.rds" and assign it to variable `df`
+1. Make a barplot of mean mpg per cylinder, you will need to use `group_by` and `summarise`, also barplots need `stat="identity" in the geom.
+1. Make a box plot of mpg per cylinder
 
-ggplot(df, aes(x= Species, y=Sepal.Length, fill =Species)) + 
+```{r BoxPlots}
+
+setwd(DataFolder) #Set the working directory just in case we changed it for some reason
+df <-readRDS("dfRDS.rds")
+
+
+#Doing you processing for plots in a chain is convenient if you don't need the processed data frame again.
+df %>% group_by(cyl) %>% summarise(mpg=mean(mpg)) %>% 
+  ggplot(., aes(x= cyl, y=mpg, fill =cyl)) + 
+  geom_bar(stat="identity") +ggtitle("barplot of average miles per gallon by cylinder type")
+
+ggplot(df, aes(x= cyl, y=mpg, fill =cyl)) + 
   geom_boxplot()+
-  labs(title = "Relationship Between Sepal.Length and Species")
-
+  labs(title = "Relationship Between Cylinders and fuel efficiency")
 
 ```
+
+
 
 
 1. Determine if Sepal.Length and Sepal.Width follow a Gaussian distribution using a test of normality
@@ -333,4 +386,4 @@ structure(list(Ozone = c(41L, 36L, 12L, 18L, NA, 28L, 23L, 19L,
 ```
 
 
-
+#TEh ENDZ
