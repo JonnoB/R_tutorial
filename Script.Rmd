@@ -6,6 +6,31 @@ output: html_document
 ---
 
 
+```{r Chunk opts, echo=FALSE}
+knitr::opts_chunk$set(echo = FALSE)
+```
+
+
+
+```{r Set up hidden, message=FALSE, echo=FALSE}
+# Directory
+#setwd(file.path = "")
+
+# Load packages
+packages <- c("tidyverse", "xtable")
+
+#This piece of code will check to see if the packages you want to load are installed if they aren't it will install them
+new.packages <- packages[!(packages %in% installed.packages()[,"Package"])]
+if(length(new.packages)) install.packages(new.packages)
+
+invisible(sapply(packages, library, character.only = TRUE))
+
+#save the starting directory as a variable
+baswd <-getwd()
+```
+
+
+
 #Introduction
 
 ##Sources of help
@@ -23,12 +48,12 @@ Setting up the environment can be very helpful to do in one place this first cod
 * Short cuts can be very helpful especially inserting a new chunk using `ctrl+alt+i`
 * Creating a folder structure for you projects keeps everything easy to find, functions in the function folder, data in the data folder etc.
 
-```{r Setting Up Environment, message=FALSE}
+```{r Setting Up Environment, eval=FALSE, echo=TRUE}
 # Directory
 #setwd(file.path = "")
 
 # Load packages
-packages <- c("tidyverse")
+packages <- c("tidyverse", "openxlsx")
 
 #This piece of code will check to see if the packages you want to load are installed if they aren't it will install them
 new.packages <- packages[!(packages %in% installed.packages()[,"Package"])]
@@ -37,7 +62,7 @@ if(length(new.packages)) install.packages(new.packages)
 invisible(sapply(packages, library, character.only = TRUE))
 
 #save the starting directory as a variable
-baswd <-getwd()
+basewd <-getwd()
 ```
 
 
@@ -47,7 +72,7 @@ baswd <-getwd()
 
 
 R contains many different data sets and additional data sets are usually installed with new packages. You can see what packages are installed on your machineby typing `data()` in the command line. packages can be loaded using the following methods
-```{r}
+```{r, echo=TRUE}
 
 data("airquality") #creates a promise
 airquality %>% head #anything that calls the promises causes it to be evaluated
@@ -66,26 +91,30 @@ Load the `mtcars` data frame and assign it to the variable `df`
 df <- mtcars
 ```
 
-In R all the objects you work with have different classes these can be data frames, matrices, models, vectors etc. Different objects have different properties, meaning they react differently to the functions you try on them.
 
-* With the data frame you have just loaded, use the functions,`class`, `dim`, `head`, `colnames`, `names`, `View`.
-* Load the datasets `VADeaths` and `discoveries` and use the same functions, what happens? why do you think it happens?
+1. With the data frame you have just loaded, use the functions,`class`, `dim`, `head`, `colnames`, `names`, `View`.
+1. Load the datasets `VADeaths` and `discoveries` and use the same functions, what happens? why do you think it happens?
 
 ```{r}
 
 # Inspect the data
+class(df)
 dim(df)
 colnames(df)
 View(head(df))
-summary(df)
 head(df)
 ```
 
+#Classes
+
+In R all the objects you work with have different classes these can be data frames, matrices, models, vectors etc. Different objects have different properties, meaning they react differently to the functions you try on them.
+
 Given that data frames can hold multiple data types it is worth checking what class each column in a data frame is. This can be boring to check one at a time so using a `for` loop could be an option. However R also has a group of functions called the `apply` family, `sapply`, and `lapply` being the most commonly used. These functions move across every element of a dataframe/matrix/list and perform a function on it returning the result.
 
-
-* Use sapply to sum up each column of the dataframe `df` 
-* Use `sapply` to find out the classes of each varible in `df` compare this to the classes found in the `iris` data set.
+##Check the class of each variable
+1. Use sapply to sum up each column of the dataframe `df` 
+1. Use `sapply` to find out the classes of each varible in `df` compare this to the classes found in the `iris` data set.
+3. Do you think the results of the summming function is surprising?
 
 ```{r using sapply}
 
@@ -97,14 +126,12 @@ sapply(df, class)
 
 ```
 
-Do you think the results of the summming function is surprising?
-
-
-##Changing classes
+##Change class
 
 As was seen in the previous exercise some of the variables of df could do with changing class. Class can be changed by calling `as.` before the class you want to convert to e.g `as.data.frame` if possible R will then coerce the object into the new class, or return an error if it is not possible.
 
 A matrix can only hold a single class of information for example, integers **or** characters but not both. A data frame can hold multiple data types as long as they are vectors, this makes data frames much more flexible they are the building block of working in R. A list can hold whatever you like including other lists.
+
 
 1. Change the cyl, vs, and am  variables to factors (Use `lapply` or `mutate_at` if you can work out how)
 2. Change hp to an integer
@@ -125,15 +152,26 @@ df %<>% mutate_at(c(2,8,9), as.factor) %>% mutate(hp= as.integer(hp))
 
 sapply(df2, class)
 sapply(df, class)
+```
+
+```{r, eval= FALSE}
 #Are they equal?
 all.equal(sapply(df2, class), sapply(df, class))
 #win
-rm(df2)
+```
 
+```{r}
+#this variable is not needed, but because the previous code chunk is not evaluated it needs to be deleted here
+rm(df2)
 ```
 
 
+#Exploring Data
+
+Getting an idea of what is going on in your data frame is an important first step in working with data, we have already learn a bit about how the data works, now we are going to go a bit deeper.
+
 1. Use rownames() and mutate() to make a new variable called "model" that has the names of the cars
+2. Use the summary function to get a an overview of the dataset
 2. Return the data frame with only th first 5 car models
 3. Return the data frame with the top 5 most fuel efficient cars
 4. Return a dataframe with the 5 least fuel efficient cars
@@ -142,54 +180,42 @@ rm(df2)
 ```{r Exercise 1: Data Cleaning}
 
 df <- df %>% mutate(model = rownames(.))
-
-df %>% top_n(5, mpg) #top 5 unordered
+summary(df)
+df %>% top_n(5, mpg)#top 5 unordered
 df %>% arrange(desc(mpg)) %>% top_n(5, mpg) #top 5 ordered
 df %>% arrange(mpg) %>% head(5) #
 df %>% arrange(desc(mpg)) %>% group_by(cyl) %>% summarise_all(first)
 
+```
 
-# Different ways to do the same thing
-# df$Sepal.Length <-as.factor(df$Sepal.Length)
-# df[,"Sepal.Length"] <- as.factor(df$Sepal.Length)
-# df[,5] <- as.factor(df$Species)
-# df <- df %>%
-#   mutate(Sepal.Length = as.factor(Sepal.Length),
-#          Species = as.factor(Species))
-# 
 
-# Number of missing values
-# is.na(df) %>% sum
-# 
-# #Number of valid rows
-# sum(complete.cases(df))
-# 
-# # What column is it in
-# sapply(df, function(x) any(is.na(x)))
-# 
-# # What row is it in
-# df[is.na(df$Sepal.Width),]
-# 
-# Remove the row manually
+#Saving data
+In the next section we are going to use a different data, however we have made some changes to our dataframe and so it is a good idea to save it somewhere. Getting data in and out of R that is not a preloaded dataset can be difficult when starting out so we will go through a few methods. The most common methods for saving data is `save`, `saveRDS`, `write.csv` which is a special case of `write.table`, and `write.xlsx` from the `opsenxlsx` package.
 
-# Remove the row the easy way
+**Tip** Remember to use the correct file extension at the end of the file name when saving, it makes it easier to identify files and for them to be opened by others.
 
-# Replace the row as the median or mean 
+##Creating sub directories
+In order to make our project manageable and easy to navigate we will create a new folder for the data, then save various versions of the dataframe `df` in it for later
+
+```{r saving}
+
+setwd(basewd)
+dir.create("R_tutorial")
+dir.exists("R_tutorial")
+
+save("df", "df_save")
 
 ```
 
 
+
 #Creating Plots
-In this section we willl explore using ggplot2 R's most popular plotting package to visualise data sets. We will begin using a simple scatter plot, and then build on it's complexity by adding "layers". After the scatter plot we will create a box plot. 
+In this section we willl explore using ggplot2 R's most popular plotting package to visualise data sets. We will begin using a simple scatter plot, and then build on it's complexity by adding "layers". After the scatter plot we will create a box plot which is very useful for representing catagorical/factoral data
 
 
 ##Scatterplot 
 
-I don't think jitter should be used, it doesn't add anything to the data and will make everyones graph look different whilst reducing the separation of the data. geom_point is more simple and and provides a better visual. 
 
-The geom_smooth is quite advanced for a first few plots also it isn't working on my version
-
-The facet wrap with grey dots in the background is awesome I've never done that before
 
 1. Plot the relationship between variables Sepal.Length and Sepal.Width
 2. Color the points by Species
@@ -275,9 +301,9 @@ cor.test(df2$Sepal.Length,df2$Sepal.Width, method = c("pearson"), conf.level = 0
 ```
 
 
-#Asking Questions on SO
+#Asking Questions on Stackoverflow
 
-Without Stackoverflow programming would be an even more difficult and frustrating experience than it already is. SO has a lot of questions already answered, you will still probably want to ask some. However if you want to be an OG as well as an OP you should follow a few basic rules.
+Without SO programming would be an even more difficult and frustrating experience than it already is. SO has a lot of questions already answered, you will still probably want to ask some. However if you want to be an OG as well as an OP you should [read this](http://stackoverflow.com/help/how-to-ask) and follow a few basic rules.
 
 1. Make sure you have actually tried. The SO community is there to answer questions not hold hands and react badly when it looks like someone hasn't attempted the question themslef first.
 2. Google it first! if there is already answer outthere especially if the answer is on SO already, your question will be voted down and closed.
