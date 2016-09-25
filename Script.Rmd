@@ -28,6 +28,8 @@ basewd <-getwd()
 
 
 #Introduction
+This introduction is to help students on the BUSICS msc at UCL gain a basic understanding of programming in R.
+
 
 ##Sources of help
 
