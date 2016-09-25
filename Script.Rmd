@@ -13,7 +13,7 @@ knitr::opts_chunk$set(echo = FALSE)
 
 ```{r Set up hidden, message=FALSE}
 # Load packages
-packages <- c("tidyverse", "openxlsx", "gridExtra")
+packages <- c("tidyverse", "openxlsx", "gridExtra", "caret")
 
 #This piece of code will check to see if the packages you want to load are installed if they aren't it will install them
 new.packages <- packages[!(packages %in% installed.packages()[,"Package"])]
@@ -44,7 +44,7 @@ Setting up the environment can be very helpful to do in one place this first cod
 
 ```{r Setting Up Environment, eval=FALSE, echo=TRUE}
 # Load packages
-packages <- c("tidyverse", "openxlsx")
+packages <- c("tidyverse", "openxlsx", "caret")
 
 #This piece of code will check to see if the packages you want to load are installed if they aren't it will install them
 new.packages <- packages[!(packages %in% installed.packages()[,"Package"])]
@@ -59,7 +59,7 @@ basewd <-getwd()
 
 
 
-#Exploring the data
+#First Steps
 
 
 R contains many different data sets and additional data sets are usually installed with new packages. You can see what packages are installed on your machineby typing `data()` in the command line. packages can be loaded using the following methods
@@ -311,7 +311,7 @@ Boxplots are a compact way of representing key statistics in categorical/factora
 4. Make a new folder called "Figures" in "R_tutorial" use `ggsave` and create a pdf and a png of the boxplot 
 
 ```{r, eval=FALSE}
-
+#This can cause problems when knitting the document due to root drive issues. FOr simplicity we moved it to it's own code chunk.
 setwd(DataFolder) #Set the working directory just in case we changed it for some reason
 
 ```
@@ -351,33 +351,130 @@ ggsave("Boxplot.pdf")
 ```
 
 
+#Tidying Data
+
+The tidy verse uses a concept called [tidy data](http://vita.had.co.nz/papers/tidy-data.pdf). Ggplot uses data in the long form of a tidy data set. in order to get data into this form the `gather` function is needed. Gather can be a bit tricky to work out so it's worth spending a bit of time understanding it. 
+
+1. Assign the "WorldPhones" dataset to the "df" variable
+2. Convert df from a matrix to a dataframe (ggplot only works with dataframes) and turn the row names in to a variable called year
+3. Gather the data so that it comes into long form
+3. Create a line plot coloured by continent
+5. Add a title and rename the x and y axis to something more descriptive
+
+**Tip\:** Remember to exclude the Year variable from the gather command.
+
+```{r}
 
 
-1. Determine if Sepal.Length and Sepal.Width follow a Gaussian distribution using a test of normality
-2. Make a histogram or frequency density plot to roughly visalize the feature distributions
-3. Determine if the correlation between Sepal.Length and Sepal.Width is significant
-```{r Exercise 4: test normality, test correlation}
+df <-WorldPhones %>% as.data.frame() %>% mutate(Year = rownames(.)) %>%
+  gather(key=Continent, value="Phones", -Year)
 
-# I don't know why df2 has been brought in
-df2<-iris
-ggplot(df2, aes(Sepal.Width)) + 
-  stat_bin(bins = 20,  fill="steelblue", color = "white") + 
-  theme_bw()
-
-ggplot(df2, aes(Sepal.Width)) + 
-  geom_density(fill= "steelblue") + 
-  theme_bw()
-
-colnames(df2)
-df2 <- df2[,c(1:4)]
-#This produces an error I don't kniw what you are trying to do
-#cor.test(df2)
-
-# Low P --> reject H0
-cor.test(df2$Sepal.Length,df2$Sepal.Width, method = c("pearson"), conf.level = 0.95)[3]
-
+ df %>% 
+   ggplot(., aes(x= Year, y= Phones, group= Continent,colour=Continent)) +
+   geom_line() +
+   labs(x="Year of Survey", y= "Number of Phones ('000s)", title="Phone Line per Continent")
 
 ```
+
+#Modelling
+
+
+
+#Supervised learning
+
+##Regression
+
+1. Load the "iris" dataset
+2. Set the random seed to make sure the script is reproducible
+3. Use `CreateDataPartition` to create a training set, where the input vector is "Species" and "list=FALSE""
+4. Create a linear model predicting "Sepal.Length"
+5. Use `predict` and `postResample` to find the accuracy of the model on the test set.
+6. Repeat the above with "method=rf" what do you notice?
+
+
+```{r}
+
+df <- iris
+set.seed(1995)
+training <- createDataPartition(df$Species, times = 1, p=0.8, list=FALSE)
+
+reg1 <- train(x=select(df,-Sepal.Length)[training,], y=df$Sepal.Length[training], method="lm" )
+preds <- predict(reg1, select(df,-Sepal.Length)[-training,])
+postResample(preds, df$Sepal.Length[-training])
+
+reg2 <- train(x=select(df,-Sepal.Length)[training,], y=df$Sepal.Length[training], method="rf" )
+preds <- predict(reg2, select(df,-Sepal.Length)[-training,])
+postResample(preds, df$Sepal.Length[-training])
+```
+
+
+## Classification
+
+```{r}
+
+class1 <- train(x=select(df,-Species)[training,], y=df$Species[training], method="rf" )
+preds <- predict(class1, select(df,-Species)[-training,])
+postResample(preds, df$Species[-training])
+
+confusionMatrix(preds, df$Species[-training])
+```
+
+
+```{r}
+warp <- warpbreaks
+set.seed(1995)
+trainingwarp <- createDataPartition(warp$wool, times = 1, p=0.8, list=FALSE)
+
+class2 <- train(x=select(warp,-wool)[trainingwarp,], y=warp$wool[trainingwarp], method="rf" )
+predswarp <- predict(class2, select(warp,-wool)[-trainingwarp,])
+postResample(predswarp, warp$wool[-trainingwarp])
+confusionMatrix(predswarp, warp$wool[-trainingwarp])
+
+
+class3 <- train(x=select(warp,-wool)[trainingwarp,], y=warp$wool[trainingwarp], method="glm", family=binomial )
+predswarp <- predict(class3, select(warp,-wool)[-trainingwarp,])
+postResample(predswarp, warp$wool[-trainingwarp])
+confusionMatrix(predswarp, warp$wool[-trainingwarp])
+
+```
+
+#Unsupervised
+
+1. Use the `kmeans` function to cluster the iris datast on all the variables except the "Species" variable, set number of clusters to 3, and nstarts to 30
+2. make a bivariate table (enter two vectors) comparing the clusters to the species of the iris data set. How do they compare?
+3.
+
+**TIP\:**  Use the `names` function to find the vector of clusters in the cluster object.
+
+
+```{r}
+
+set.seed(1666)
+dfCluster <- kmeans(select(df, 1:4), 3, nstart = 30)
+
+table(dfCluster$cluster, df$Species)
+
+confusionMatrix(dfCluster$cluster, as.integer(df$Species))
+
+```
+
+You can find more information on using random forest with the iris training set [here](http://rischanlab.github.io/RandomForest.html)
+
+
+#Amazon AWS
+
+Sooner or later you are going to run out of processing power. Using Amazon's cloud computing service EC2 can be a really helpful solution, they provide scalable computing power and online storage. [Louis Aslett](http://www.louisaslett.com/RStudio_AMI/) has created several R images that greatly speed up the process of going online.
+
+1. Save this script to a new folder in your dropbox account
+1. Create an Amazon Aws account
+2. Go to Louis Aslett's homepage and choose an image to load
+4. start a free instance of the AWS machine.
+5. Log onto the machine connect your dropbox including only the folder you have created
+6. Run the script
+
+The first couple times you log onto AWS it can be a bit fiddly, remembering to set the security settings correctly is important, if you are not using SSH the relevant ports need to be set to "0.0.0.0/0".
+
+**TIP\:** Keep your data on dropbox and load it each time unless you have very large data sets this stops you paying loads in storage costs
 
 
 #Asking Questions on Stackoverflow
