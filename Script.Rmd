@@ -28,7 +28,7 @@ basewd <-getwd()
 
 
 #Introduction
-This introduction is to help students on the BUSICS msc at UCL gain a basic understanding of programming in R.
+This introduction is to help students on the BUSICS msc at UCL gain a basic understanding of programming in R. The course is designed to be taught in the loosest sense of the word. Students will read the text and perform the exercises whilst someone barely more competant than themselves walks around and tries to help them. At the end of the course, they will be given the answer sheet, which will probably be worse than the work they have done.
 
 
 ##Sources of help
