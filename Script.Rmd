@@ -13,7 +13,7 @@ knitr::opts_chunk$set(echo = FALSE)
 
 ```{r Set up hidden, message=FALSE}
 # Load packages
-packages <- c("tidyverse", "openxlsx", "gridExtra", "caret")
+packages <- c("tidyverse", "openxlsx", "gridExtra", "caret","randomForest")
 
 #This piece of code will check to see if the packages you want to load are installed if they aren't it will install them
 new.packages <- packages[!(packages %in% installed.packages()[,"Package"])]
@@ -28,7 +28,10 @@ basewd <-getwd()
 
 
 #Introduction
-This introduction is to help students on the BUSICS msc at UCL gain a basic understanding of programming in R. The course is designed to be taught in the loosest sense of the word. Students will read the text and perform the exercises whilst someone barely more competant than themselves walks around and tries to help them. At the end of the course, they will be given the answer sheet, which will probably be worse than the work they have done.
+This introduction is to help students on the BUSICS msc at UCL gain a basic understanding of programming in [R](https://cran.r-project.org/). The course is designed to be taught in the loosest sense of the word. Students will read the text and perform the exercises whilst someone barely more competant than themselves walks around and tries to help them. At the end of the course, they will be given the answer sheet, which will probably be worse than the work they have done.
+
+The course focuses on a suite of packages created by [Hadley Wickham](http://hadley.nz/) called the "[tidyverse](https://cran.r-project.org/web/packages/tidyverse/tidyverse.pdf)", These packages are very widly used across the R community and have greatly helped reduced the difficulty of learning about R.
+
 
 
 ##Sources of help
@@ -46,7 +49,7 @@ Setting up the environment can be very helpful to do in one place this first cod
 
 ```{r Setting Up Environment, eval=FALSE, echo=TRUE}
 # Load packages
-packages <- c("tidyverse", "openxlsx", "caret")
+packages <- c("tidyverse", "openxlsx", "caret", "randomForest")
 
 #This piece of code will check to see if the packages you want to load are installed if they aren't it will install them
 new.packages <- packages[!(packages %in% installed.packages()[,"Package"])]
@@ -291,6 +294,8 @@ p3<-ggplot(df, aes(x=Sepal.Length,y=Sepal.Width,color = Species)) +
   geom_smooth(method = "lm", se = FALSE) +
   labs(title = "Relationship Between Sepal.Length\n and Sepal.Width by Species")
 
+
+#Using grid.arrange allows you to place unrelated plots next to each other, this can be really helpful for certain presentations
 grid.arrange(p1,p2, ncol=2)
 p3
 #5 plots facetted with grey dots added in the background to indicate where the other species are
@@ -412,14 +417,23 @@ postResample(preds, df$Sepal.Length[-training])
 
 ## Classification
 
-```{r}
+1. Use the random forest technique to predict species from the iris data set using all other variables
+2. Using the predictions look at the results of `PostResample`
+3. Compare the results with `confusionMatrix` what does it mean?
+4. Extract just the confusion matrix from the `confusionMatrix`
 
+```{r}
+set.seed(1982)
 class1 <- train(x=select(df,-Species)[training,], y=df$Species[training], method="rf" )
 preds <- predict(class1, select(df,-Species)[-training,])
 postResample(preds, df$Species[-training])
 
 confusionMatrix(preds, df$Species[-training])
 ```
+
+1. Load the "warpbreaks" dataset and create a new partition using the variable "warp"
+2. Repeat the activities of the previous question to get a confusion matrix
+3. Repeat again using "method='glm'" remember to set family to "binomial"
 
 
 ```{r}
@@ -444,7 +458,7 @@ confusionMatrix(predswarp, warp$wool[-trainingwarp])
 
 1. Use the `kmeans` function to cluster the iris datast on all the variables except the "Species" variable, set number of clusters to 3, and nstarts to 30
 2. make a bivariate table (enter two vectors) comparing the clusters to the species of the iris data set. How do they compare?
-3.
+3. **Challenge** make a confusion matrix, interpret.
 
 **TIP\:**  Use the `names` function to find the vector of clusters in the cluster object.
 
@@ -510,5 +524,9 @@ structure(list(Ozone = c(41L, 36L, 12L, 18L, NA, 28L, 23L, 19L,
 
 ```
 
+#About the Authors
+
+[Jonathan Bourne](https://uk.linkedin.com/in/jonathan-bourne-2601a334)
+[Derek Luckasko](https://www.linkedin.com/in/dereklukacsko)
 
 #TEh ENDZ
