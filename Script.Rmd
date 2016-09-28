@@ -13,7 +13,7 @@ knitr::opts_chunk$set(echo = FALSE)
 
 ```{r Set up hidden, message=FALSE}
 # Load packages
-packages <- c("tidyverse", "openxlsx", "gridExtra", "caret","randomForest")
+packages <- c("tidyverse", "openxlsx", "gridExtra", "caret","randomForest", "knitr")
 
 #This piece of code will check to see if the packages you want to load are installed if they aren't it will install them
 new.packages <- packages[!(packages %in% installed.packages()[,"Package"])]
@@ -45,7 +45,11 @@ The course focuses on a suite of packages created by [Hadley Wickham](http://had
 #Setup
 Setting up the environment can be very helpful to do in one place this first code chunk can store all the packages you need in your analysis, load any custom functions that you have made through out the analysis and store the locations of any folders that you use for easy folder switching.
 
-**TIP\:** Short cuts can be very helpful especially inserting a new chunk using `ctrl+alt+i`
+**TIP\:** When using Rstudio
+
+* Short cuts can be very helpful especially inserting a new chunk using `ctrl+alt+i`
+* To run code highlight it and press `ctrl+Enter`
+* To view a dataframe double click on it's name in the "Environment" tab
 
 ```{r Setting Up Environment, eval=FALSE, echo=TRUE}
 # Load packages
@@ -112,7 +116,8 @@ Given that data frames can hold multiple data types it is worth checking what cl
 1. Use `sapply` to find out the classes of each varible in `df` compare this to the classes found in the `iris` data set.
 3. Do you think the results of the summming function is surprising?
 
-```{r using sapply}
+```{r using sapply, results='hide'}
+#hiding results mean that the code is run , but not displayed in the knitr output. This can be useful in certain cases... this isn't one of them
 
 sapply(df, sum)
 #sapply(iris, sum)
@@ -135,12 +140,18 @@ A matrix can only hold a single class of information for example, integers **or*
 
 **Tip\:** For changes to variables in a dataframe or matrix use mutate (look at the wrangling cheatsheet).
 
-```{r}
+
+```{r, results='hide'}
 
 #Old school solution using lapply
 df2 <-df
 df2[,c(2,8,9)] <- lapply(c(2,8,9), function(n) as.factor(df2[,n]))
 df2$hp <- as.integer(df2$hp)
+
+```
+
+
+```{r}
 
 #Modern style using chaining and dplyr
 df %<>% mutate_at(c(2,8,9), as.factor) %>% mutate(hp= as.integer(hp))
@@ -172,13 +183,35 @@ Getting an idea of what is going on in your data frame is an important first ste
 4. Return a dataframe with the 5 least fuel efficient cars
 5. Find the most fuel efficient car for each cylinder group
 
-```{r Exercise 1: Data Cleaning}
 
+```{r, results='hide'}
+#In this chunk hiding the results is useful as needs to be modified, but I don't wan tot take up a lot of space in the final document with the summary command. I could put summary in a separate chunk which doesn't get evaluated, this would be a good idea for a computationally intense action, but in this case it doesn't matter
+
+#1
 df <- df %>% mutate(model = rownames(.))
+#2
 summary(df)
+
+```
+
+
+```{r, results='asis'}
+
+df %>% arrange(desc(mpg)) %>% group_by(cyl) %>% summarise_all(first) %>%
+  kable( ., format="markdown", caption="Top 5 unordered")
+
+
+```
+
+
+```{r Exercise 1: Data Cleaning, eval=FALSE}
+#3
 df %>% top_n(5, mpg)#top 5 unordered
+#4
 df %>% arrange(desc(mpg)) %>% top_n(5, mpg) #top 5 ordered
-df %>% arrange(mpg) %>% head(5) #
+#5
+df %>% arrange(mpg) %>% head(5)#
+#6
 df %>% arrange(desc(mpg)) %>% group_by(cyl) %>% summarise_all(first)
 
 ```
@@ -197,7 +230,9 @@ In order to make our project manageable and easy to navigate we will create a ne
 4. Create a folder called `Data` and set the working directory inside it.
 5. Save the file path to the Data directory as a variable call it "DataFolder"
 
-```{r, warning=FALSE, message=FALSE}
+```{r, warning=FALSE, results='hide'}
+#The reuslts are hidden as I don't want to diplay the results of the logical test `dir.create`
+
 #1
 setwd(basewd)
 #2
@@ -230,7 +265,7 @@ We have made some changes to our dataframe and so it is a good idea to save it s
 
 **TIP\:** You may wish to experiment including `row.names=1` when loading the csv.
 
-```{r saving}
+```{r saving, results='hide'}
 
 #1
 write.csv(df, "dfcsv.csv")
@@ -256,6 +291,8 @@ all.equal(sapply(df, class), sapply(dfRDS, class))
 #4
 rm(list = c(ls()[grep("df", ls())]))
 ```
+
+
 
 The way you save files and the methods you can use to load data into your machine, affect what happens to it later. Generally saving data in RDS format is a good idea, it get compressed, and all class information is maintained, it can also be used to store other objects that are not tabular datasets, such as lists, models, etc. However you will seldom be lucky enough to recieve data in RDS format so knowing what to expect when that happens is important. Lookup the `readr` package and familiarise yourself with `stringsAsFactors` in `read.csv` that can ruin your day.
 
@@ -316,6 +353,7 @@ Boxplots are a compact way of representing key statistics in categorical/factora
 1. Make a barplot of mean mpg per cylinder, you will need to use `group_by` and `summarise`, also barplots need `stat="identity" in the geom.
 1. Make a box plot of mpg per cylinder
 4. Make a new folder called "Figures" in "R_tutorial" use `ggsave` and create a pdf and a png of the boxplot 
+5. make a denisty plot using this data, how can this be useful?
 
 ```{r, eval=FALSE}
 #This can cause problems when knitting the document due to root drive issues. FOr simplicity we moved it to it's own code chunk.
@@ -358,12 +396,15 @@ ggsave("Boxplot.pdf")
 ```
 
 
+When you are making plots, barplots should only be used if you are using raw counts across categorical values, if you are using mean or any other statistic you are better off using a boxplot. Boxplots contain much more information about data than barplots. If you want to know how to put error bars on a bar plot you're doing it wrong, use a box plot. 
+If you are planning on making a 3D pie chart, do a different degree.
+
 #Tidying Data
 
-The tidy verse uses a concept called [tidy data](http://vita.had.co.nz/papers/tidy-data.pdf). Ggplot uses data in the long form of a tidy data set. in order to get data into this form the `gather` function is needed. Gather can be a bit tricky to work out so it's worth spending a bit of time understanding it. 
+The tidyverse uses a concept called [tidy data](http://vita.had.co.nz/papers/tidy-data.pdf). Ggplot uses data in the long form of a tidy data set. in order to get data into this form the `gather` function is needed. Gather can be a bit tricky to work out so it's worth spending a bit of time understanding it. 
 
 1. Assign the "WorldPhones" dataset to the "df" variable
-2. Convert df from a matrix to a dataframe (ggplot only works with dataframes) and turn the row names in to a variable called year
+2. Convert df from a matrix to a dataframe (Packages in the tidyverse only work with dataframes) and turn the row names in to a variable called year
 3. Gather the data so that it comes into long form
 3. Create a line plot coloured by continent
 5. Add a title and rename the x and y axis to something more descriptive
@@ -379,17 +420,19 @@ df <-WorldPhones %>% as.data.frame() %>% mutate(Year = rownames(.)) %>%
  df %>% 
    ggplot(., aes(x= Year, y= Phones, group= Continent,colour=Continent)) +
    geom_line() +
-   labs(x="Year of Survey", y= "Number of Phones ('000s)", title="Phone Line per Continent")
+   labs(x="Year of Survey", y= "Number of Phones ('000s)", title="Phone Lines per Continent")
 
 ```
 
 #Modelling
 
-
+The bit that everyone body wants to get to in statistical programming is modelling. This part of the tutorial isn't supposed to teach you about various machine learning techniques but how to apply them in R. Having said that we will cover the two main branches of machine learning Supervised and Unsupervised
 
 #Supervised learning
+Supervised learning is broadly speaking machine learning when you know the outcome you are trying to predict. This could be the results of sports events, age of death, rate of growth, anythign with a measurable (directly or indirectly) result.
 
 ##Regression
+Regression predicts a continuous variable for amount earned by a company next quarter. The simplest form of regression that is generally considered is multi-linear regression $(X'X)^{-1}X'y = \beta$, the big sister of the "plot  x against y and draw a line through the dots" everyone learnt about in school.
 
 1. Load the "iris" dataset
 2. Set the random seed to make sure the script is reproducible
@@ -416,6 +459,7 @@ postResample(preds, df$Sepal.Length[-training])
 
 
 ## Classification
+When the dependent variable is in distinct categories, classification is used. Classic examples of this include SPAM vs HAM and Cat vs Dog. The previous examples are binary outcomes, however there can also be multiclass classification which is more fiddly mathmatically but makes very little difference when implementing in R.
 
 1. Use the random forest technique to predict species from the iris data set using all other variables
 2. Using the predictions look at the results of `PostResample`
@@ -455,6 +499,8 @@ confusionMatrix(predswarp, warp$wool[-trainingwarp])
 ```
 
 #Unsupervised
+Unsupervised learning doesn't predict an outcome it often looks for patterns in the data which imply a structure. Clustering algorithms such as Hierarchichal and k-means are good examples of unsupervised learning. 
+
 
 1. Use the `kmeans` function to cluster the iris datast on all the variables except the "Species" variable, set number of clusters to 3, and nstarts to 30
 2. make a bivariate table (enter two vectors) comparing the clusters to the species of the iris data set. How do they compare?
@@ -470,7 +516,7 @@ dfCluster <- kmeans(select(df, 1:4), 3, nstart = 30)
 
 table(dfCluster$cluster, df$Species)
 
-confusionMatrix(dfCluster$cluster, as.integer(df$Species))
+#confusionMatrix(dfCluster$cluster, as.integer(df$Species))
 
 ```
 
@@ -524,9 +570,10 @@ structure(list(Ozone = c(41L, 36L, 12L, 18L, NA, 28L, 23L, 19L,
 
 ```
 
-#About the Authors
+#Authors Linkedin
 
 [Jonathan Bourne](https://uk.linkedin.com/in/jonathan-bourne-2601a334)
+
 [Derek Luckasko](https://www.linkedin.com/in/dereklukacsko)
 
 #TEh ENDZ
